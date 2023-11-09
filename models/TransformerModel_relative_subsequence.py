@@ -42,10 +42,10 @@ class TransformerModel(nn.Module):
         self.relu = ReLU()
         self.transformerencoder = TransformerEncoder(encoder_layer, n_layers, encoder_norm)
         self.flatten = Flatten()
-        #self.outlinear = Linear(d_model, num_classes)
+
 
         self.type_ = nn.Sequential(Linear(d_model, n_type))
-        self.sev_ = nn.Sequential(Linear(d_model, n_sev))
+
         self.date_ = nn.Sequential(Linear(d_model, n_date))
 
 
@@ -73,12 +73,15 @@ class TransformerModel(nn.Module):
         x = self.relu(x)
         #logits = self.outlinear(x)
 
-        #logprobabilities = F.log_softmax(logits, dim=-1)
+	xtype = self.type_(x)
+        xdate= self.date_(x)
+        
+        logprobabilitiestype = F.log_softmax(xtype, dim=-1)
+        logprobabilitiesdate = F.log_softmax(xdate, dim=-1)
 
         return {
-            'type': self.type_(x),
-            'sev': self.sev_(x),
-            'date': self.date_(x)
+            'type': logprobabilitiestype,
+            'date': logprobabilitiesdate
         }
 
 

@@ -35,13 +35,9 @@ class TempCNN(torch.nn.Module):
                                                            drop_probability=dropout)
         self.flatten = Flatten()
         self.dense = FC_BatchNorm_Relu_Dropout(hidden_dims * sequencelength, 4 * hidden_dims, drop_probability=dropout)
-        # self.logsoftmax = nn.Sequential(nn.Linear(4 * hidden_dims, num_classes), nn.LogSoftmax(dim=-1))
-        # self.sig = nn.Sequential(nn.Linear(4 * hidden_dims, num_classes), nn.Sigmoid())
-
-        self.type_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_type))
-        self.sev_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_sev))
-        self.date_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_date))
-
+      
+        self.type_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_type), nn.LogSoftmax(dim=-1))
+        self.date_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_date), nn.LogSoftmax(dim=-1))
 
 
         # self.initialize_weights()
@@ -56,10 +52,6 @@ class TempCNN(torch.nn.Module):
 
         x = self.flatten(x)
         x = self.dense(x)
-        # last= self.logsoftmax(x)
-        # last= self.sig(x)
-        #print('softmax', size(last))
-
 
 
         return {

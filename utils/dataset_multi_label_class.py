@@ -8,27 +8,14 @@ import numpy as np
 
 
 
-def load_csv(seqcsv, labelfile):
-    """
-    Load the csv to make sequence and label ready to dataset
-    Args:
-        seqcsv : csv file. Where each line is a pixel, and raw are spectral having the following format: [ID, 1985_B1, 1985_B2, 1985_B3....., 2010_B4, 2021_B5, 2021_B6]
-        labelfile : TMulti label for each pixel Id.
 
-    Returns:
-       Dataframe with spectral information and label concatenated
-    """
-    list = []
-    for csvfile in seqcsv :
-        data = pd.read_csv(csvfile)
-        label = pd.read_csv(labelfile)
-        data.drop_duplicates()
-        datalabl = pd.merge(data, label, how='inner', left_on = 'id',  right_on = 'pix_id')
-        list.append(datalabl)
-    idresult = pd.concat(list, axis=0, ignore_index=True)
-
-    return idresult
-
+def load_parquet(seq):
+    data = pd.read_parquet(seq)
+    data.drop(columns=['id_grid', 'index',  'randomID','AN_ORIGINE', 'ORIGINE','id_left', 'ared', 'use', 'RandomV','index_righ', 'NBR_1', 'NBR_2','NBR_3','NBR_4','NBR_5','NBR_6','NBR_7', 'NBR_8', 'NBR_9', 'NBR_10','iNBR50','iNBR100','iNBR125','iNBR150','iNBR200','geometry', 'randomAN', 'slope', 'theilslope'], inplace=True)
+    data['Xseq'] = data['Xseq']+1
+    data['Xseq'] = data['Xseq'].replace(100, 0)
+    data=data.replace(-32768.0000, np.nan)
+    return data
 
 
 def numpy_fill(a, startfillval=0):
@@ -55,12 +42,12 @@ def numpy_fill(a, startfillval=0):
 class MultiDisDataset(Dataset):
 
          def __init__(self, seqfile, labelfile) :
-             self.seqfile = load_csv(seqfile, labelfile)
+             self.seqfile = load_parquet(seqfile, labelfile)
 
              self.disId_data =  self.seqfile.iloc[:,3]  # Get the Id of the pixel
              self.disId = np.asarray(self.disId_data.values).astype(np.float)
 
-             self.X_data = self.seqfile.iloc[:,5:227]/10000  #227=5+6bands*37y get the spectral value sequences ..../1000 is for normalized the spectral value
+             sself.X_data = self.seqfile.iloc[:,2:62]/10000 #31=2+6band*10y
              self.X = self.X_data.values
              self.X = np.asarray(self.X, dtype='float32')
              self.seq = self.X.reshape(self.X.shape[0],int(self.X.shape[1]/6),6)  #reshape sequence as numpy of size (37,6)
@@ -70,8 +57,10 @@ class MultiDisDataset(Dataset):
              self.Y_sev = self.seqfile.iloc[:,229+7:229+7+6]  #For severity (6 classes)
              self.Y_date = self.seqfile.iloc[:,229+7+6:229+7+6+1+38]  #For date (38 classes)
 
+             self.Y_type = self.seqfile.iloc[:,0]  #For type
+             self.Y_date = self.seqfile.iloc[:, -1]  #For date
+
              self.Y_type= np.asarray(self.Y_type.values, dtype='float342')
-             self.Y_sev= np.asarray(self.Y_sev.values, dtype='float32')
              self.Y_date= np.asarray(self.Y_date.values, dtype='float32')
 
 
@@ -80,17 +69,14 @@ class MultiDisDataset(Dataset):
 
          def __getitem__(self, idx):
              labels_type=self.Y_type[idx]
-             labels_sev=self.Y_sev[idx]
              labels_date=self.Y_date[idx]
 
              sequence = self.seq[idx]
-             sequence[sequence == -3.2768] = np.nan
              sequence= numpy_fill(sequence)  #fill nan value
 
              # Organize the dataset into dictionnary
              data = {'sequence':torch.Tensor(sequence),
                     'labels': {'label_type':torch.tensor(labels_type).float(),
-                               'label_sev':torch.tensor(labels_sev).float(),
                                'label_date':torch.tensor(labels_date).float()}}
 
              id = self.disId[idx]
@@ -109,7 +95,7 @@ class MultiDisDataset_inf(Dataset):
              self.coordy = np.asarray(self.coordy).astype(np.float)
 
 
-             self.X_data = self.seqfile.iloc[:,2:224]/10000  #224=2+6*37 ..... /1000 is for normalized the spectral value
+             self.X_data = self.seqfile.iloc[:,2:44]/10000  #31=1+6band*7y
              self.X = self.X_data.values
              self.X = np.asarray(self.X, dtype='float32')
              self.seq = self.X.reshape(self.X.shape[0],int(self.X.shape[1]/6),6) #reshape sequence as numpy of size (37,6)
