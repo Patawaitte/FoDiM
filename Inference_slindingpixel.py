@@ -1,10 +1,8 @@
 import os
 import rioxarray
-import time
-from Inference.Final_tiff import makemap
-import torch.nn as nn
+from utils.Final_tiff import makemap
 
-from utils.dataset_subset import MultiDisDataset_inf as myDataset
+from utils.Dataset10y import Dataset_inf as myDataset
 from torch.utils.data.dataset import Subset
 from glob import glob
 import torch
@@ -13,8 +11,7 @@ import pandas as pd
 
 import rasterio
 from tqdm import tqdm
-import warnings
-import cProfile
+
 
 # Dataset to use
 IMG_PATH="/LANDSAT_CLIP/*.tif"  # Landsat time serie image for disturbance segmentation
@@ -63,7 +60,7 @@ def inference(pytorch_network, loader):
             predtype = predtype.view(-1).cpu().numpy()
             predtype = np.reshape(predtype,(len(predtype),1))
 
-	    # Get the date prediction of the network and reshape it
+            # Get the date prediction of the network and reshape it
             y_pred_date = pytorch_network(x)['date']
             preddate = torch.argmax(y_pred_date, 1)
             preddate = preddate.view(-1).cpu().numpy()            
@@ -174,7 +171,7 @@ for name, value in windows_dict_last:
         allresultdf_['Year'] = allresultdf_['rYear']+int(firstyear)-1
         allresultdf_['Year'] = np.where(allresultdf_['Year']== (int(firstyear)-1), 99 ,allresultdf_['Year']) # Transform relative year to actual year
 
- 	# Apply makemap function to transform df to .tif map
+        # Apply makemap function to transform df to .tif map
         makemap(allresultdf_, nameexport, outputpath)
  
         #

@@ -7,8 +7,8 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.positional_encodings import PositionalEncoding1D, Summer
-from utils.relativeposition import MultiHeadAttentionLayer
+#from positional_encodings import PositionalEncoding1D, Summer
+from models.relativeposition import MultiHeadAttentionLayer
 
 """
 
@@ -25,17 +25,17 @@ With the addition of relative position encoding
 __all__ = ['TransformerModel']
 
 class TransformerModel(nn.Module):
-    def __init__(self, input_dim, n_type, n_sev, n_date,  window_size, d_model=64, n_head=1, n_layers=3,
+    def __init__(self, input_dim, n_type,  n_date,  window_size, d_model=64, n_head=1, n_layers=3,
                  d_inner=64, activation="relu", dropout=0.1):
 
         super(TransformerModel, self).__init__()
-        self.modelname = f"TransformerEncoder_input-dim={input_dim}_n_type={n_type}_n_sev={n_sev}_n_date={n_date}_window_size={window_size}" \
+        self.modelname = f"TransformerEncoder_input-dim={input_dim}_n_type={n_type}_n_date={n_date}_window_size={window_size}" \
                          f"d-model={d_model}_d-inner={d_inner}_n-layers={n_layers}_n-head={n_head}_" \
                          f"dropout={dropout} "
 
 
         encoder_layer = TransformerEncoderLayer(d_model, n_head, window_size, d_inner, dropout, activation)
-        self.pos_encoder = Summer(PositionalEncoding1D(d_model))
+        #self.pos_encoder = Summer(PositionalEncoding1D(d_model))
         encoder_norm = LayerNorm(d_model)
 
         self.inlinear = Linear(input_dim, d_model)
@@ -73,7 +73,7 @@ class TransformerModel(nn.Module):
         x = self.relu(x)
         #logits = self.outlinear(x)
 
-	xtype = self.type_(x)
+        xtype = self.type_(x)
         xdate= self.date_(x)
         
         logprobabilitiestype = F.log_softmax(xtype, dim=-1)

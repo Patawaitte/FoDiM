@@ -19,7 +19,6 @@ def makemap(idresult, name, output):
         Two maps .tif of forest disturbance type and year
             """
     frametocompare = idresult[['x', 'y','type',  'Year']]
-
     bands=['type', 'Year']
     for b in bands:
 
@@ -30,7 +29,7 @@ def makemap(idresult, name, output):
         da = new_df.set_index(['y', 'x']).to_xarray()
         da = da.set_coords(['y', 'x'])
         da = da.rio.write_crs(dst_projection, inplace=True)
-        da.rio.to_raster(output+'result_'+name+'_'+b+'.tif')
+        da.rio.to_raster(output+'result_'+name+'_'+b+'.tif') # Save the map
 
 
 

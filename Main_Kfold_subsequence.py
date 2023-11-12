@@ -4,11 +4,8 @@ import random
 import pandas as pd
 from glob import glob
 import torch
-import torch.nn as nn
 import numpy as np
-import math
-from utils.dataset_multi_label_class import MultiDisDataset as myDataset
-from sklearn.metrics import precision_score, recall_score, f1_score
+from utils.Dataset10y import Dataset as myDataset
 import seaborn as sns
 sns.cubehelix_palette(as_cmap=True)
 
@@ -78,7 +75,7 @@ def pytorch_train_one_epoch(pytorch_network, optimizer, loss_function, scheduler
 
             # forward + backward + optimize
             y_pred = pytorch_network(x)
-	    loss1= loss_function(y_pred['type'], ytype)
+            loss1= loss_function(y_pred['type'], ytype)
             loss2= loss_function(y_pred['date'], ydate)
             loss=loss1+loss2
             # zero the parameter gradients
@@ -137,13 +134,12 @@ def pytorch_test(pytorch_network, loader, loss_function):
             # calculate outputs by running sequence through the network
             y_pred = pytorch_network(x)
             y_pred_type = pytorch_network(x)['type']
-	    y_pred_date = pytorch_network(x)['date']
+            y_pred_date = pytorch_network(x)['date']
 	    
-	    predtype = torch.argmax(y_pred_type, 1)
+            predtype = torch.argmax(y_pred_type, 1)
             preddate = torch.argmax(y_pred_date, 1)
 	    
-	    
-	    preddate = preddate.view(-1).cpu().numpy()
+            preddate = preddate.view(-1).cpu().numpy()
             preddate = np.reshape(preddate,(len(preddate),1))
            
             predtype = predtype.view(-1).cpu().numpy()
@@ -173,7 +169,7 @@ def pytorch_test(pytorch_network, loader, loss_function):
 
             # Since the loss are averages for the batch, we multiply
             # it by the the number of examples
-	    loss_sum += float(loss) * len(x)
+            loss_sum += float(loss) * len(x)
             acc_sum += float(pytorch_accuracy(y_pred['type'], ytype)) * len(x)
             example_count += len(x)
 
@@ -220,7 +216,7 @@ def pytorch_train(pytorch_network):
         train_loss= pytorch_train_one_epoch(pytorch_network, optimizer, loss_function,  scheduler)
 
         # Validation at the end of the epoch
-        valid_loss, pred, true,  ids= pytorch_test(pytorch_network, valid_loader, loss_function)
+        valid_loss, _, _, _, _, _, ids= pytorch_test(pytorch_network, valid_loader, loss_function)
 
         print("Epoch {}/{}: loss: {}, val_loss: {}, ".format(
             epoch, num_epochs, train_loss, valid_loss,         ))
@@ -228,7 +224,6 @@ def pytorch_train(pytorch_network):
         scheduler.step()
         l_train_loss.append(train_loss)
         l_valid_loss.append(valid_loss)
-
 
     # Test at the end of the training
     test_loss,  predstype, predsdate, truetype, truedate, test_acc, ids = pytorch_test(pytorch_network, test_loader, loss_function)
@@ -268,15 +263,15 @@ if __name__ == '__main__':
 
     # Get sequence files : parquet line where each line is a pixel, and raw are spectral having the following format: [ID, 1985_B1, 1985_B2, 1985_B3....., 2010_B4, 2021_B5, 2021_B6]
 
-    pathValid = '/Landsat_CFL_CSV/valid/*.parquet' #  path with dataset using for validation
+    pathValid = '/home/beland/PycharmProjects/MyProjectDisturb/GitHub_share/FoDiM/Dataset/valid/*.parquet' #  path with dataset using for validation
     validfile = glob(pathValid,  recursive=True)
 
-    print(len(validfile))
+    print('validfile', len(validfile))
 
-    datafolder = '/Landsat_CFL_CSV/k/*.parquet' # path with dataset using for training and testing
+    datafolder = '/home/beland/PycharmProjects/MyProjectDisturb/GitHub_share/FoDiM/Dataset/k/*.parquet' # path with dataset using for training and testing
     datafile = glob(datafolder,  recursive=True)
     random.shuffle(datafile)
-    print(len(datafile))
+    print('datafile',len(datafile))
 
     #  Selection of the fold using cross validation
     n=5
@@ -299,25 +294,25 @@ if __name__ == '__main__':
             trainfile.extend(a)
 
         # Calling the dataset function
-        train_dataset = myDataset(trainfile, labelfile)
+        train_dataset = myDataset(trainfile)
         print("train_dataset", len(train_dataset))
-        test_dataset = myDataset(testfile, labelfile)
+        test_dataset = myDataset(testfile)
         print("test_dataset", len(test_dataset))
-        valid_dataset = myDataset(validfile, labelfile)
+        valid_dataset = myDataset(validfile)
         print("valid_dataset", len(valid_dataset))
 
 
         # Calling the DataLoader
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=8)
-        valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size,  shuffle=True, drop_last=True, num_workers=8,drop_last=True)
+        valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size,  shuffle=True, drop_last=True, num_workers=8)
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
 
         name = 'k_'+foldnum+'_multiclass_multilabel_Trans_maxpos15_CFLimg_nodata_w_epc'
 
         # Choice of model to use : TempCNN or Transformer
-        #model = TempCNN(input_dim=len(FEATURE_COLUMS), n_type=11,n_date=11, sequencelength=10)
-        model = TransformerModel(input_dim=len(FEATURE_COLUMS), n_type=11,  n_date=11, window_size=(1,10))
+        #model = TempCNN(input_dim=6, n_type=11,n_date=11, sequencelength=10)
+        model = TransformerModel(input_dim=6, n_type=11,  n_date=11, window_size=(1,10))
 
 
         # Train

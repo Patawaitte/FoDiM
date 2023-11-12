@@ -20,9 +20,9 @@ Transformed fo multilabel/multi target segmentation.
 __all__ = ['TempCNN']
 
 class TempCNN(torch.nn.Module):
-    def __init__(self, input_dim, n_type, n_sev, n_date, sequencelength, kernel_size=9, hidden_dims=16, dropout=0.4):
+    def __init__(self, input_dim, n_type, n_date, sequencelength, kernel_size=9, hidden_dims=16, dropout=0.4):
         super(TempCNN, self).__init__()
-        self.modelname = f"TempCNN_input-dim={input_dim}_n_type={n_type}_n_sev={n_sev}_n_date={n_date}_sequencelenght={sequencelength}_" \
+        self.modelname = f"TempCNN_input-dim={input_dim}_n_type={n_type}_n_date={n_date}_sequencelenght={sequencelength}_" \
                          f"kernelsize={kernel_size}_hidden-dims={hidden_dims}_dropout={dropout}"
 
         self.hidden_dims = hidden_dims
@@ -40,7 +40,6 @@ class TempCNN(torch.nn.Module):
         self.date_ = nn.Sequential(nn.Linear(4 * hidden_dims, n_date), nn.LogSoftmax(dim=-1))
 
 
-        # self.initialize_weights()
 
     def forward(self, x):
         # require NxTxD

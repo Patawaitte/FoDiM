@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import pandas as pd
 from glob import glob
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ import numpy as np
 
 def load_parquet(seq):
     data = pd.read_parquet(seq)
+
     data.drop(columns=['id_grid', 'index',  'randomID','AN_ORIGINE', 'ORIGINE','id_left', 'ared', 'use', 'RandomV','index_righ', 'NBR_1', 'NBR_2','NBR_3','NBR_4','NBR_5','NBR_6','NBR_7', 'NBR_8', 'NBR_9', 'NBR_10','iNBR50','iNBR100','iNBR125','iNBR150','iNBR200','geometry', 'randomAN', 'slope', 'theilslope'], inplace=True)
     data['Xseq'] = data['Xseq']+1
     data['Xseq'] = data['Xseq'].replace(100, 0)
@@ -38,16 +39,18 @@ def numpy_fill(a, startfillval=0):
     a[0] = tmp
     return out
 
+
+
 # Dataset Class for training and test
-class MultiDisDataset(Dataset):
+class Dataset(Dataset):
 
-         def __init__(self, seqfile, labelfile) :
-             self.seqfile = load_parquet(seqfile, labelfile)
+         def __init__(self, seqfile) :
+             self.seqfile = load_parquet(seqfile)
 
-             self.disId_data =  self.seqfile.iloc[:,3]  # Get the Id of the pixel
+             self.disId_data =  self.seqfile.iloc[:,1]  # Get the Id of the pixel
              self.disId = np.asarray(self.disId_data.values).astype(np.float)
 
-             sself.X_data = self.seqfile.iloc[:,2:62]/10000 #31=2+6band*10y
+             self.X_data = self.seqfile.iloc[:,2:62]/10000 #31=2+6band*10y
              self.X = self.X_data.values
              self.X = np.asarray(self.X, dtype='float32')
              self.seq = self.X.reshape(self.X.shape[0],int(self.X.shape[1]/6),6)  #reshape sequence as numpy of size (37,6)
@@ -60,7 +63,7 @@ class MultiDisDataset(Dataset):
              self.Y_type = self.seqfile.iloc[:,0]  #For type
              self.Y_date = self.seqfile.iloc[:, -1]  #For date
 
-             self.Y_type= np.asarray(self.Y_type.values, dtype='float342')
+             self.Y_type= np.asarray(self.Y_type.values, dtype='float32')
              self.Y_date= np.asarray(self.Y_date.values, dtype='float32')
 
 
@@ -76,15 +79,15 @@ class MultiDisDataset(Dataset):
 
              # Organize the dataset into dictionnary
              data = {'sequence':torch.Tensor(sequence),
-                    'labels': {'label_type':torch.tensor(labels_type).float(),
-                               'label_date':torch.tensor(labels_date).float()}}
+                    'labels': {'label_type':torch.tensor(labels_type).long(),
+                               'label_date':torch.tensor(labels_date).long()}}
 
              id = self.disId[idx]
              return data, id
 
 # Dataset Class for inference (without label)
 # Input are dataframe created from slidding windows images with x,y coordinate and spectral temporal value
-class MultiDisDataset_inf(Dataset):
+class Dataset_inf(Dataset):
          def __init__(self, seqdf) :
              self.seqfile = seqdf
 
@@ -122,13 +125,11 @@ class MultiDisDataset_inf(Dataset):
 
 if __name__=="__main__":
     # Test for visualization
-    seqfile = '/test/*.csv'
+    seqfile = '/FoDiM/Dataset/k/10.0.parquet'
     validfile = glob(seqfile,  recursive=True)
-    labels= '/Alltypo_class_multi.csv'
-    tt = MultiDisDataset(validfile,labels)
+    tt = Dataset(validfile)
     fig = plt.figure(figsize=(15,4))
     i=0
-
     for seq in tt:
         i +=1
         data, id = seq
