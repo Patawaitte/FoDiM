@@ -35,7 +35,7 @@ class MultiHeadAttentionLayer(nn.Module):
         self.hid_dim = hid_dim
         self.n_heads = n_heads
         self.head_dim = hid_dim // n_heads
-        self.max_relative_position = 10
+        self.max_relative_position = 3
 
         self.relative_position_k = RelativePosition(self.head_dim, self.max_relative_position)
         self.relative_position_v = RelativePosition(self.head_dim, self.max_relative_position)

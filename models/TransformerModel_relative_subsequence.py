@@ -25,7 +25,7 @@ With the addition of relative position encoding
 __all__ = ['TransformerModel']
 
 class TransformerModel(nn.Module):
-    def __init__(self, input_dim, n_type,  n_date,  window_size, d_model=64, n_head=1, n_layers=3,
+    def __init__(self, input_dim, n_type,  n_date,  window_size, d_model=64, n_head=2, n_layers=3,
                  d_inner=64, activation="relu", dropout=0.1):
 
         super(TransformerModel, self).__init__()

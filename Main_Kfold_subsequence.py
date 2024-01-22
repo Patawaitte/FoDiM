@@ -66,18 +66,18 @@ def pytorch_train_one_epoch(pytorch_network, optimizer, loss_function, scheduler
         example_count = 0
         for batch, id in train_loader:
             # get the inputs - spectral sequence
-            x= batch['sequence']
+            x = batch['sequence']
             # Transfer batch on GPU 
             x = x.to(device)
             
-            ytype= batch['labels']['label_type'].to(device)
-            ydate= batch['labels']['label_date'].to(device)
+            ytype = batch['labels']['label_type'].to(device)
+            ydate = batch['labels']['label_date'].to(device)
 
             # forward + backward + optimize
             y_pred = pytorch_network(x)
-            loss1= loss_function(y_pred['type'], ytype)
-            loss2= loss_function(y_pred['date'], ydate)
-            loss=loss1+loss2
+            loss1 = loss_function(y_pred['type'], ytype)
+            loss2 = loss_function(y_pred['date'], ydate)
+            loss = loss1+loss2
             # zero the parameter gradients
             optimizer.zero_grad()            
             
